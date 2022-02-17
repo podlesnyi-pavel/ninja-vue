@@ -9,6 +9,7 @@
             </label>
             <div class="mt-1 relative rounded-md shadow-md">
               <input
+                @input="visibleTickerAdedd = false"
                 v-on:keydown.enter="add"
                 v-model="ticker"
                 type="text"
@@ -42,10 +43,12 @@
                 CHD
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="visibleTickerAdedd" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
-        <button
+        <butto
           @click="add"
           type="button"
           class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -64,7 +67,7 @@
             ></path>
           </svg>
           Добавить
-        </button>
+        </butto>
       </section>
 
       <template v-if="tickers.length">
@@ -164,33 +167,42 @@ export default {
       tickers: [],
       schedule: null,
       graph: [],
+      visibleTickerAdedd: false,
     };
   },
 
   methods: {
     add() {
-      const currentTicker = {
-        name: this.ticker,
-        price: "-",
-      };
+      if (
+        this.tickers.every(
+          (item) => item.name.toLowerCase() !== this.ticker.toLowerCase()
+        )
+      ) {
+        const currentTicker = {
+          name: this.ticker.toUpperCase(),
+          price: "-",
+        };
 
-      this.tickers.push(currentTicker);
+        this.tickers.push(currentTicker);
 
-      setInterval(async () => {
-        const f = await fetch(
-          `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=10d0d37d66347fa0148b737d38449a7b7297599e53b971cca50db699ff2f6281`
-        );
+        setInterval(async () => {
+          const f = await fetch(
+            `https://min-api.cryptocompare.com/data/price?fsym=${currentTicker.name}&tsyms=USD&api_key=10d0d37d66347fa0148b737d38449a7b7297599e53b971cca50db699ff2f6281`
+          );
 
-        const data = await f.json();
-        this.tickers.find((f) => f.name === currentTicker.name).price =
-          data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+          const data = await f.json();
+          this.tickers.find((f) => f.name === currentTicker.name).price =
+            data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
 
-        if (this.schedule?.name === currentTicker.name) {
-          this.graph.push(data.USD);
-        }
-      }, 5000);
+          if (this.schedule?.name === currentTicker.name) {
+            this.graph.push(data.USD);
+          }
+        }, 5000);
 
-      this.ticker = "";
+        this.ticker = "";
+      } else {
+        this.visibleTickerAdedd = true;
+      }
     },
 
     normilizeGraph() {
